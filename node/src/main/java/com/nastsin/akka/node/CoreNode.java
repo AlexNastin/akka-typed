@@ -1,6 +1,7 @@
 package com.nastsin.akka.node;
 
 import akka.actor.typed.ActorSystem;
+import com.nastsin.akka.node.actor.time.Buncher;
 import com.nastsin.akka.node.actor.Initializer;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -14,7 +15,8 @@ public class CoreNode {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreNode.class);
 
     public static void main(String[] args) {
-        ActorSystem.create(Initializer.create(), "akka-test-system", loadConfig());
+        ActorSystem<String> actorSystem = ActorSystem.create(Initializer.create(), "akka-test-system", loadConfig());
+        actorSystem.tell("AAA");
     }
 
     private static Config loadConfig() {
