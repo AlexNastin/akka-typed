@@ -2,6 +2,7 @@ package com.nastsin.akka.node.actor;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.SupervisorStrategy;
 import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
@@ -12,11 +13,16 @@ import akka.cluster.sharding.typed.javadsl.EntityRef;
 import akka.persistence.typed.PersistenceId;
 import com.google.protobuf.GeneratedMessageV3;
 import com.nastsin.akka.common.entity.AddCommand;
+import com.nastsin.akka.common.entity.AkkaCommand;
+import com.nastsin.akka.common.entity.Do;
 import com.nastsin.akka.common.sharding.Sharding;
 import com.nastsin.akka.node.actor.pool.Worker;
 import com.nastsin.akka.node.actor.sharding.Balance;
 import com.nastsin.akka.node.actor.timer.BatchActor;
 import com.nastsin.akka.node.actor.timer.Buncher;
+import com.nastsin.akka.node.actor.timer.custom.Analyser;
+import com.nastsin.akka.node.actor.timer.custom.TimerActor;
+import com.nastsin.akka.node.util.PayLoadUtil;
 
 import java.time.Duration;
 
@@ -37,6 +43,16 @@ public class Initializer extends AbstractBehavior<String> {
         return newReceiveBuilder()
                 .onMessageEquals("CustomTimerAkka", () -> {
                     System.out.println("START CustomTimerAkka!");
+                    PoolRouter<AkkaCommand> pool =
+                            Routers.pool(500, Behaviors.supervise(
+                                    TimerActor.create(Duration.ofSeconds(1))).onFailure(SupervisorStrategy.restart())).withRoundRobinRouting();
+
+
+                    ActorRef<AkkaCommand> router = getContext().spawn(pool, "timer-pool");
+
+                    ActorRef<AkkaCommand> analyser = getContext().spawn(Analyser.create(router), "analyser");
+
+                    PayLoadUtil.startTest(1000, router, new Do(), 180000L, analyser);
 
                     System.out.println("END CustomTimerAkka!");
                     return Behaviors.same();

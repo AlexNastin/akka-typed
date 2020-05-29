@@ -16,10 +16,10 @@ public class CoreNode {
     public static void main(String[] args) {
         ActorSystem<String> actorSystem = ActorSystem.create(Initializer.create(), "akka-test-system", loadConfig());
 
-        actorSystem.tell("TimerAkka");
+//        actorSystem.tell("TimerAkka");
         actorSystem.tell("CustomTimerAkka");
 //        actorSystem.tell("PersistSharding");
-        actorSystem.tell("PoolReceptionist");
+//        actorSystem.tell("PoolReceptionist");
     }
 
     private static Config loadConfig() {
