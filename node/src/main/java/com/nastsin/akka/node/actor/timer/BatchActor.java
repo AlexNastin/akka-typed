@@ -1,4 +1,4 @@
-package com.nastsin.akka.node.actor.time;
+package com.nastsin.akka.node.actor.timer;
 
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;

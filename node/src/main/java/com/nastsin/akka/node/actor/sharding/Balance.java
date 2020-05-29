@@ -1,4 +1,4 @@
-package com.nastsin.akka.node.actor;
+package com.nastsin.akka.node.actor.sharding;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -15,20 +15,18 @@ import com.nastsin.akka.common.entity.BalanceState;
 public class Balance extends EventSourcedBehavior<GeneratedMessageV3, GeneratedMessageV3, BalanceState> {
 
     private final ActorContext<GeneratedMessageV3> context;
-    private final ActorRef<ShardingEnvelope<GeneratedMessageV3>> actorRef;
 
     private String entityId;
 
-    public Balance(ActorContext<GeneratedMessageV3> context, String entityId, PersistenceId persistenceId, ActorRef<ShardingEnvelope<GeneratedMessageV3>> ddrsActorRef) {
+    public Balance(ActorContext<GeneratedMessageV3> context, String entityId, PersistenceId persistenceId) {
         super(persistenceId);
         this.context = context;
         this.entityId = entityId;
-        this.actorRef = ddrsActorRef;
-        this.context.getLog().info("Starting HelloWorld {}", entityId);
+        this.context.getLog().info("Starting Balance {}", entityId);
     }
 
-    public static Behavior<GeneratedMessageV3> create(String entityId, PersistenceId persistenceId, ActorRef<ShardingEnvelope<GeneratedMessageV3>> actorRef) {
-        return Behaviors.setup(context -> new Balance(context, entityId, persistenceId, actorRef));
+    public static Behavior<GeneratedMessageV3> create(String entityId, PersistenceId persistenceId) {
+        return Behaviors.setup(context -> new Balance(context, entityId, persistenceId));
     }
 
     @Override
@@ -54,7 +52,6 @@ public class Balance extends EventSourcedBehavior<GeneratedMessageV3, GeneratedM
         return Effect().persist(addEvent);
     }
 
-
     @Override
     public EventHandler<BalanceState, GeneratedMessageV3> eventHandler() {
         return newEventHandlerBuilder()
@@ -64,9 +61,5 @@ public class Balance extends EventSourcedBehavior<GeneratedMessageV3, GeneratedM
                     return state;
                 })
                 .build();
-    }
-
-    private String getEntityId(Object o) {
-        return String.valueOf(o.hashCode() % 100);
     }
 }

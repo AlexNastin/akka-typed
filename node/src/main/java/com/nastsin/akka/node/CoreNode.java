@@ -1,7 +1,6 @@
 package com.nastsin.akka.node;
 
 import akka.actor.typed.ActorSystem;
-import com.nastsin.akka.node.actor.time.Buncher;
 import com.nastsin.akka.node.actor.Initializer;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -16,7 +15,11 @@ public class CoreNode {
 
     public static void main(String[] args) {
         ActorSystem<String> actorSystem = ActorSystem.create(Initializer.create(), "akka-test-system", loadConfig());
-        actorSystem.tell("AAA");
+
+        actorSystem.tell("TimerAkka");
+        actorSystem.tell("CustomTimerAkka");
+//        actorSystem.tell("PersistSharding");
+        actorSystem.tell("PoolReceptionist");
     }
 
     private static Config loadConfig() {
