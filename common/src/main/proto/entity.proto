@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.nastsin.akka.common.entity";
+
+package entity;
+
+// Commands
+message AddCommand {
+    string id = 1;
+}
+
+message RemoveCommand {
+    string id = 1;
+}
+//------------
+
+// Events
+message AddEvent {
+    string id = 1;
+}
+
+message RemoveEvent {
+    string id = 1;
+}
+//------------
+
+// State
+message BalanceState {
+    int64 value = 1;
+    repeated Other others = 2;
+}
+//------------
+
+message Other {
+    string name = 1;
+}
