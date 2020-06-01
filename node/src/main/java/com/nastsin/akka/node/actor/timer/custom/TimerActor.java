@@ -26,7 +26,7 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
     }
 
     public static Behavior<AkkaCommand> create(Duration after) {
-        return Behaviors.withTimers(timer -> Behaviors.setup(param -> new TimerActor(param, timer, after)));
+        return Behaviors.withTimers(timer -> Behaviors.setup(context -> new TimerActor(context, timer, after)));
     }
 
     @Override
