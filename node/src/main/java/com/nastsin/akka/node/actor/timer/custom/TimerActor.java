@@ -11,7 +11,7 @@ import java.time.Duration;
 
 public class TimerActor extends AbstractBehavior<AkkaCommand> {
 
-    private static final String TIMER_KEY = "TimeoutKey";
+    private final String TIMER_KEY = "TimeoutKey" + Math.abs(Math.random());
 
     private final TimerScheduler<AkkaCommand> timer;
     private final Duration after;
@@ -40,7 +40,7 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
                 })
                 .onMessage(Timeout.class, timeout -> {
                     countTimeout++;
-                    getContext().getLog().error("Timeout. DurationSec: {}, TimeSec: {}, countCommand: {}, countTimeout: {}",
+                    getContext().getLog().info("Timeout. DurationSec: {}, TimeSec: {}, countCommand: {}, countTimeout: {}",
                             after.getSeconds(), (double) (System.nanoTime() - timeout.timestamp) / 1000000000, countCommand, countTimeout);
                     return Behaviors.same();
                 })

@@ -33,7 +33,7 @@ public class Analyser extends AbstractBehavior<AkkaCommand> {
                     return Behaviors.same();
                 })
                 .onMessage(Control.class, param -> {
-                    getContext().getLog().info("Control: {}", param.getAnswer());
+                    getContext().getLog().error("Control: {}", param.getAnswer());
                     return Behaviors.same();
                 })
                 .build();
