@@ -9,6 +9,8 @@ import com.nastsin.akka.common.entity.Timeout;
 import com.nastsin.akka.common.util.TestUtil;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TimerActor extends AbstractBehavior<AkkaCommand> {
 
@@ -16,6 +18,8 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
 
     private final TimerScheduler<AkkaCommand> timer;
     private final Duration after;
+
+    private List<Double> timing = new ArrayList<>();
 
     private final int id;
 
@@ -37,21 +41,24 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
     public Receive<AkkaCommand> createReceive() {
         return newReceiveBuilder()
                 .onMessage(Do.class, param -> {
-                    getContext().getLog().info("Do!");
+                    getContext().getLog().debug("Do!");
                     countCommand++;
                     timer.startSingleTimer(new Timeout(System.nanoTime()), after);
                     return Behaviors.same();
                 })
                 .onMessage(Timeout.class, timeout -> {
                     countTimeout++;
-                    getContext().getLog().info("Timeout. Id: {}, DurationSec: {}, TimeSec: {}, countCommand: {}, countTimeout: {}", id,
-                            after.getSeconds(), (double) (System.nanoTime() - timeout.timestamp) / 1000000000, countCommand, countTimeout);
+                    double time = (double) (System.nanoTime() - timeout.timestamp) / 1000000;
+                    timing.add(time);
+                    getContext().getLog().debug("Timeout. Id: {}, DurationMillis: {}, TimeMillis: {}, countCommand: {}, countTimeout: {}", id,
+                            after.toMillis(), time, countCommand, countTimeout);
                     return Behaviors.same();
                 })
                 .onMessage(Control.class, control -> {
                     control.setAnswer("Id: " + id + " countCommand: " + countCommand + " , countTimeout: " + countTimeout);
                     control.getReplayTo().tell(control);
                     control.setId(id);
+                    control.setTiming(timing);
                     return Behaviors.same();
                 })
                 .build();

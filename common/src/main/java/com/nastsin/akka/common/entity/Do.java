@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data
 public class Do implements AkkaCommand {
-    private int value;
+    private int poolSize;
 
-    public Do(int value) {
-        this.value = value;
+    public Do(int poolSize) {
+        this.poolSize = poolSize;
     }
 
     public Do() {
