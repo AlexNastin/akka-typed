@@ -11,7 +11,7 @@ import java.time.Duration;
 
 public class TimerActor extends AbstractBehavior<AkkaCommand> {
 
-    private final String TIMER_KEY = "TimeoutKey" + Math.abs(Math.random());
+    private final String TIMER_KEY = "TimeoutKey";
 
     private final TimerScheduler<AkkaCommand> timer;
     private final Duration after;
