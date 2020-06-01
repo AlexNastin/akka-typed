@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class Control implements AkkaCommand {
+    private int id;
     private String answer;
     private ActorRef<AkkaCommand> replayTo;
 

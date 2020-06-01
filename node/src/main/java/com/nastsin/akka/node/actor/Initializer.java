@@ -15,6 +15,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.nastsin.akka.common.entity.AddCommand;
 import com.nastsin.akka.common.entity.AkkaCommand;
 import com.nastsin.akka.common.entity.Do;
+import com.nastsin.akka.common.entity.init.*;
 import com.nastsin.akka.common.sharding.Sharding;
 import com.nastsin.akka.node.actor.pool.Worker;
 import com.nastsin.akka.node.actor.sharding.Balance;
@@ -26,38 +27,39 @@ import com.nastsin.akka.node.util.PayLoadUtil;
 
 import java.time.Duration;
 
-public class Initializer extends AbstractBehavior<String> {
+public class Initializer extends AbstractBehavior<InitCommand> {
 
     private final ClusterSharding sharding = ClusterSharding.get(getContext().getSystem());
 
-    public Initializer(ActorContext<String> context) {
+    public Initializer(ActorContext<InitCommand> context) {
         super(context);
     }
 
-    public static Behavior<String> create() {
+    public static Behavior<InitCommand> create() {
         return Behaviors.setup(Initializer::new);
     }
 
     @Override
-    public Receive<String> createReceive() {
+    public Receive<InitCommand> createReceive() {
         return newReceiveBuilder()
-                .onMessageEquals("CustomTimerAkka", () -> {
+                .onMessage(TimerCaseInit.class, param -> {
                     System.out.println("START CustomTimerAkka!");
+
                     PoolRouter<AkkaCommand> pool =
-                            Routers.pool(500, Behaviors.supervise(
-                                    TimerActor.create(Duration.ofSeconds(1))).onFailure(SupervisorStrategy.restart())).withRoundRobinRouting();
+                            Routers.pool(param.getPoolSize(), Behaviors.supervise(
+                                    TimerActor.create(param.getDuration())).onFailure(SupervisorStrategy.restart())).withRoundRobinRouting();
 
 
                     ActorRef<AkkaCommand> router = getContext().spawn(pool, "timer-pool");
 
                     ActorRef<AkkaCommand> analyser = getContext().spawn(Analyser.create(router), "analyser");
 
-                    PayLoadUtil.startTest(1000, router, new Do(), 180000L, analyser);
+                    PayLoadUtil.startTimerTest(param.getPeriod(), router, new Do(), param.getTimeOfWork(), analyser, param.getPoolSize());
 
                     System.out.println("END CustomTimerAkka!");
                     return Behaviors.same();
                 })
-                .onMessageEquals("TimerAkka", () -> {
+                .onMessage(TimerAkkaCaseInit.class, param -> {
                     System.out.println("START TimerAkka!");
                     ActorRef<Buncher.Batch> batchActor = getContext().spawn(Behaviors.setup(BatchActor::new), "batchActor");
                     ActorRef<Buncher.Command> buncher = getContext().spawn(Buncher.create(batchActor, Duration.ofSeconds(3), 10), "buncher");
@@ -65,7 +67,7 @@ public class Initializer extends AbstractBehavior<String> {
                     System.out.println("END TimerAkka!");
                     return Behaviors.same();
                 })
-                .onMessageEquals("PersistSharding", () -> {
+                .onMessage(PersistShardingCaseInit.class, param -> {
                     System.out.println("START PersistSharding!");
                     ActorRef<ShardingEnvelope<GeneratedMessageV3>> shardRegion = sharding.init(
                             Entity.of(
@@ -86,7 +88,7 @@ public class Initializer extends AbstractBehavior<String> {
                     System.out.println("END PersistSharding!");
                     return Behaviors.same();
                 })
-                .onMessageEquals("PoolReceptionist", () -> {
+                .onMessage(PoolReceptionistCaseInit.class, param -> {
                     System.out.println("START PoolReceptionist!");
                     //todo: not working
                     ServiceKey<GeneratedMessageV3> serviceKey = ServiceKey.create(GeneratedMessageV3.class, "key-worker");

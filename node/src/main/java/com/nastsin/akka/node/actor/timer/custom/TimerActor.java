@@ -6,6 +6,7 @@ import com.nastsin.akka.common.entity.AkkaCommand;
 import com.nastsin.akka.common.entity.Control;
 import com.nastsin.akka.common.entity.Do;
 import com.nastsin.akka.common.entity.Timeout;
+import com.nastsin.akka.common.util.TestUtil;
 
 import java.time.Duration;
 
@@ -16,6 +17,8 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
     private final TimerScheduler<AkkaCommand> timer;
     private final Duration after;
 
+    private final int id;
+
     private int countCommand;
     private int countTimeout;
 
@@ -23,6 +26,7 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
         super(context);
         this.timer = timer;
         this.after = after;
+        this.id = TestUtil.getId();
     }
 
     public static Behavior<AkkaCommand> create(Duration after) {
@@ -40,13 +44,14 @@ public class TimerActor extends AbstractBehavior<AkkaCommand> {
                 })
                 .onMessage(Timeout.class, timeout -> {
                     countTimeout++;
-                    getContext().getLog().info("Timeout. DurationSec: {}, TimeSec: {}, countCommand: {}, countTimeout: {}",
+                    getContext().getLog().info("Timeout. Id: {}, DurationSec: {}, TimeSec: {}, countCommand: {}, countTimeout: {}", id,
                             after.getSeconds(), (double) (System.nanoTime() - timeout.timestamp) / 1000000000, countCommand, countTimeout);
                     return Behaviors.same();
                 })
                 .onMessage(Control.class, control -> {
-                    control.setAnswer("countCommand: " + countCommand + " , countTimeout: " + countTimeout);
+                    control.setAnswer("Id: " + id + " countCommand: " + countCommand + " , countTimeout: " + countTimeout);
                     control.getReplayTo().tell(control);
+                    control.setId(id);
                     return Behaviors.same();
                 })
                 .build();
