@@ -21,9 +21,9 @@ public class Analyser extends AbstractBehavior<AkkaCommand> {
 
     private final ActorRef<AkkaCommand> router;
 
-    private List<Double> timing = new ArrayList<>(1000000);
+    private final List<Double> timing = new ArrayList<>(1000000);
 
-    private List<Control> results = new ArrayList<>();
+    private final List<Control> results = new ArrayList<>();
 
     public Analyser(ActorContext<AkkaCommand> context, ActorRef<AkkaCommand> router) {
         super(context);
