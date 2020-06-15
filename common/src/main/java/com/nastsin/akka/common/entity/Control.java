@@ -15,4 +15,9 @@ public class Control implements AkkaCommand {
     public Control(ActorRef<AkkaCommand> replayTo) {
         this.replayTo = replayTo;
     }
+
+    @Override
+    public String getId() {
+        return String.valueOf(id);
+    }
 }

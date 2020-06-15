@@ -5,23 +5,24 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import com.google.protobuf.GeneratedMessageV3;
+import com.nastsin.akka.common.entity.AkkaCommand;
+import com.nastsin.akka.common.entity.PoolDo;
 
-public class Worker extends AbstractBehavior<GeneratedMessageV3> {
+public class Worker extends AbstractBehavior<AkkaCommand> {
 
-    public static Behavior<GeneratedMessageV3> create() {
+    public static Behavior<AkkaCommand> create() {
         return Behaviors.setup(Worker::new);
     }
 
-    public Worker(ActorContext<GeneratedMessageV3> context) {
+    public Worker(ActorContext<AkkaCommand> context) {
         super(context);
     }
 
     @Override
-    public Receive<GeneratedMessageV3> createReceive() {
+    public Receive<AkkaCommand> createReceive() {
         return newReceiveBuilder()
-                .onMessage(GeneratedMessageV3.class, param -> {
-                    getContext().getLog().info("AAAAAA: {}", param);
+                .onMessage(PoolDo.class, param -> {
+                    getContext().getLog().info("Obj: {}, path: {}", param, getContext().getSelf().path().toString());
                     return Behaviors.same();
                 })
                 .onAnyMessage(param -> {

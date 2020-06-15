@@ -50,7 +50,8 @@ public class Analyser extends AbstractBehavior<AkkaCommand> {
                     return Behaviors.same();
                 })
                 .onMessage(Result.class, param -> {
-                    List<Control> collect = results.stream().sorted(Comparator.comparingInt(Control::getId)).collect(Collectors.toList());
+                    List<Control> collect = results.stream().sorted(Comparator.comparingInt(value -> Integer.parseInt(value.getId())))
+                            .collect(Collectors.toList());
                     collect.forEach(control -> getContext().getLog().error("Control: {}", control.getAnswer()));
                     double[] timingArray = new double[timing.size()];
 

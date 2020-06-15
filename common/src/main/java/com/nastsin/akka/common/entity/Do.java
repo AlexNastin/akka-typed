@@ -12,4 +12,9 @@ public class Do implements AkkaCommand {
 
     public Do() {
     }
+
+    @Override
+    public String getId() {
+        return String.valueOf(hashCode());
+    }
 }

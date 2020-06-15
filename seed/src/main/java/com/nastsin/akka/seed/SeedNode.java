@@ -15,6 +15,7 @@ public class SeedNode {
 
     public static void main(String[] args) {
         ActorSystem.create(ClusterListener.create(), "akka-test-system", loadConfig());
+
     }
 
     private static Config loadConfig() {

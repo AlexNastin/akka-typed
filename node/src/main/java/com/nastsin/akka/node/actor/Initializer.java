@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.SupervisorStrategy;
 import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
-import akka.actor.typed.receptionist.ServiceKey;
 import akka.cluster.sharding.typed.ShardingEnvelope;
 import akka.cluster.sharding.typed.javadsl.ClusterSharding;
 import akka.cluster.sharding.typed.javadsl.Entity;
@@ -15,6 +14,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.nastsin.akka.common.entity.AddCommand;
 import com.nastsin.akka.common.entity.AkkaCommand;
 import com.nastsin.akka.common.entity.Do;
+import com.nastsin.akka.common.entity.PoolDo;
 import com.nastsin.akka.common.entity.init.*;
 import com.nastsin.akka.common.sharding.Sharding;
 import com.nastsin.akka.node.actor.pool.Worker;
@@ -26,6 +26,8 @@ import com.nastsin.akka.node.actor.timer.custom.TimerActor;
 import com.nastsin.akka.node.util.PayLoadUtil;
 
 import java.time.Duration;
+
+import static com.nastsin.akka.common.util.Key.SERVICE_KEY;
 
 public class Initializer extends AbstractBehavior<InitCommand> {
 
@@ -48,7 +50,6 @@ public class Initializer extends AbstractBehavior<InitCommand> {
                     PoolRouter<AkkaCommand> pool =
                             Routers.pool(param.getPoolSize(), Behaviors.supervise(
                                     TimerActor.create(param.getDuration())).onFailure(SupervisorStrategy.restart())).withRoundRobinRouting();
-
 
                     ActorRef<AkkaCommand> router = getContext().spawn(pool, "timer-pool");
 
@@ -90,17 +91,35 @@ public class Initializer extends AbstractBehavior<InitCommand> {
                 })
                 .onMessage(PoolReceptionistCaseInit.class, param -> {
                     System.out.println("START PoolReceptionist!");
-                    //todo: not working
-                    ServiceKey<GeneratedMessageV3> serviceKey = ServiceKey.create(GeneratedMessageV3.class, "key-worker");
-                    ActorRef<GeneratedMessageV3> worker = getContext().spawn(Worker.create(), "worker");
 
-                    getContext().getSystem().receptionist().tell(Receptionist.register(serviceKey, worker));
+                    PoolRouter<AkkaCommand> pool =
+                            Routers.pool(100, Behaviors.supervise(Worker.create()).onFailure(SupervisorStrategy.restart()))
+                                    .withConsistentHashingRouting(2,
+                                            AkkaCommand::getId);
 
-                    GroupRouter<GeneratedMessageV3> group = Routers.group(serviceKey);
-                    ActorRef<GeneratedMessageV3> router = getContext().spawn(group, "worker-group");
+                    ActorRef<AkkaCommand> worker = getContext().spawn(pool, "worker");
 
-                    for (int i = 0; i < 10; i++) {
-                        router.tell(AddCommand.getDefaultInstance());
+                    ActorRef<Receptionist.Command> receptionist = getContext().getSystem().receptionist();
+
+                    receptionist.tell(Receptionist.register(SERVICE_KEY, worker));
+
+                    GroupRouter<AkkaCommand> group = Routers.group(SERVICE_KEY);
+
+                    ActorRef<AkkaCommand> router = getContext().spawn(group, "worker-group");
+
+                    getContext().getLog().info(router.path().toString());
+
+                    worker.tell(new PoolDo(1));
+                    worker.tell(new PoolDo(2));
+                    worker.tell(new PoolDo(4));
+                    worker.tell(new PoolDo(5));
+                    worker.tell(new PoolDo(6));
+
+                    Thread.sleep(5000);
+
+                    for (int i = 0; i < 1000; i++) {
+                        router.tell(new PoolDo(i));
+                        Thread.sleep(5);
                     }
                     System.out.println("END PoolReceptionist!");
                     return Behaviors.same();
